@@ -223,9 +223,30 @@ function movePlayer(direction) {
 
 // ===== BUTTONS =====
 function setupButtons() {
-  document.getElementById('start-btn').addEventListener('click', startGame);
-  document.getElementById('resume-btn').addEventListener('click', togglePause);
-  document.getElementById('restart-btn').addEventListener('click', restartGame);
+  const startBtn = document.getElementById('start-btn');
+  const resumeBtn = document.getElementById('resume-btn');
+  const restartBtn = document.getElementById('restart-btn');
+
+  if (startBtn) {
+    startBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      startGame();
+    });
+  }
+
+  if (resumeBtn) {
+    resumeBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      togglePause();
+    });
+  }
+
+  if (restartBtn) {
+    restartBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      restartGame();
+    });
+  }
 }
 
 // ===== GAME STATE =====

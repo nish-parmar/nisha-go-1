@@ -17,7 +17,6 @@
 html, body {
   height: 100%;
   overflow: hidden;
-  touch-action: none;
 }
 
 body {
@@ -271,6 +270,8 @@ body {
   letter-spacing: 2px;
   cursor: pointer;
   transition: all 0.1s;
+  pointer-events: auto;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .start-btn:hover,
