@@ -2,7 +2,9 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
   <title>NISHA GO!</title>
   <link rel="stylesheet" href="styles.css">
 </head>
@@ -206,6 +208,12 @@
         <p class="overlay-text">PRESS ESC TO RESUME</p>
         <button class="start-btn" id="resume-btn">RESUME</button>
       </div>
+    </div>
+
+    <!-- MOBILE CONTROLS -->
+    <div class="mobile-controls" id="mobile-controls">
+      <button class="mobile-btn" id="btn-left" aria-label="Move left">◀</button>
+      <button class="mobile-btn" id="btn-right" aria-label="Move right">▶</button>
     </div>
 
     <!-- GAME OVER OVERLAY -->

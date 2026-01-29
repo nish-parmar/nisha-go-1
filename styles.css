@@ -684,6 +684,42 @@ body {
   }
 }
 
+/* ===== MOBILE CONTROLS ===== */
+.mobile-controls {
+  display: none;
+  position: fixed;
+  bottom: 60px;
+  left: 0;
+  right: 0;
+  justify-content: space-between;
+  padding: 0 20px;
+  z-index: 50;
+  pointer-events: none;
+}
+
+.mobile-btn {
+  width: 80px;
+  height: 80px;
+  border: 3px solid var(--orange-bright);
+  border-radius: 50%;
+  background: rgba(10, 10, 10, 0.8);
+  color: var(--orange-bright);
+  font-size: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: auto;
+  cursor: pointer;
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: manipulation;
+}
+
+.mobile-btn:active {
+  background: var(--orange-bright);
+  color: var(--bg-dark);
+}
+
 /* ===== RESPONSIVE ===== */
 @media (max-width: 800px) {
   .left-panel {
@@ -712,5 +748,128 @@ body {
 
   .bar-segment {
     font-size: 9px;
+  }
+
+  .bottom-bar {
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .bar-info.hotkey {
+    display: none;
+  }
+}
+
+/* Mobile-specific styles */
+@media (max-width: 500px), (hover: none) and (pointer: coarse) {
+  .mobile-controls {
+    display: flex;
+  }
+
+  #game-container {
+    max-height: 100vh;
+    max-width: 100vw;
+    padding: 2px;
+    gap: 2px;
+  }
+
+  .top-bar {
+    padding: 4px;
+    min-height: 28px;
+  }
+
+  .bar-segment {
+    padding: 0 4px;
+    font-size: 8px;
+  }
+
+  .right-panel {
+    width: 80px;
+  }
+
+  .panel-header {
+    font-size: 8px;
+    padding: 2px 4px;
+  }
+
+  .score-value {
+    font-size: 14px;
+  }
+
+  .status-row {
+    font-size: 8px;
+  }
+
+  .momentum-bar {
+    height: 12px;
+  }
+
+  .momentum-labels {
+    display: none;
+  }
+
+  .bottom-bar {
+    min-height: 32px;
+    padding: 4px;
+  }
+
+  .slot-group {
+    display: none;
+  }
+
+  .bar-btn {
+    padding: 2px 8px;
+    font-size: 9px;
+  }
+
+  .mini-panel {
+    display: none;
+  }
+
+  /* Make canvas wrapper fill available space */
+  .canvas-wrapper {
+    min-height: 200px;
+  }
+
+  /* Adjust overlay for mobile */
+  .overlay-box {
+    padding: 20px;
+    margin: 10px;
+    max-width: 90vw;
+  }
+
+  .game-title {
+    font-size: 24px;
+  }
+
+  .controls-list {
+    font-size: 10px;
+  }
+
+  .start-btn {
+    padding: 10px 20px;
+    font-size: 12px;
+  }
+}
+
+/* Landscape mobile */
+@media (max-height: 500px) and (orientation: landscape) {
+  .top-bar,
+  .bottom-bar {
+    display: none;
+  }
+
+  .right-panel {
+    width: 70px;
+  }
+
+  .mobile-controls {
+    bottom: 10px;
+  }
+
+  .mobile-btn {
+    width: 60px;
+    height: 60px;
+    font-size: 24px;
   }
 }

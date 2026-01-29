@@ -194,15 +194,34 @@ function setupCanvas() {
   canvas.width = CONFIG.CANVAS_WIDTH;
   canvas.height = CONFIG.CANVAS_HEIGHT;
 
-  // Scale for display
-  canvas.style.width = (CONFIG.CANVAS_WIDTH * CONFIG.PIXEL_SCALE) + 'px';
-  canvas.style.height = (CONFIG.CANVAS_HEIGHT * CONFIG.PIXEL_SCALE) + 'px';
+  // Responsive scaling
+  resizeCanvas();
+  window.addEventListener('resize', resizeCanvas);
 
   // Disable image smoothing for crisp pixels
   ctx.imageSmoothingEnabled = false;
 
   // Calculate player Y position (near bottom)
   state.playerY = CONFIG.CANVAS_HEIGHT - CONFIG.PLAYER_SIZE - 32;
+}
+
+function resizeCanvas() {
+  const wrapper = document.querySelector('.canvas-wrapper');
+  if (!wrapper) return;
+
+  const wrapperWidth = wrapper.clientWidth - 8;
+  const wrapperHeight = wrapper.clientHeight - 8;
+
+  // Calculate scale to fit while maintaining aspect ratio
+  const scaleX = wrapperWidth / CONFIG.CANVAS_WIDTH;
+  const scaleY = wrapperHeight / CONFIG.CANVAS_HEIGHT;
+  const scale = Math.min(scaleX, scaleY);
+
+  // Use integer scaling when possible for crisp pixels
+  const finalScale = scale >= 2 ? Math.floor(scale) : scale;
+
+  canvas.style.width = Math.floor(CONFIG.CANVAS_WIDTH * finalScale) + 'px';
+  canvas.style.height = Math.floor(CONFIG.CANVAS_HEIGHT * finalScale) + 'px';
 }
 
 function loadHighScore() {
@@ -221,7 +240,7 @@ function saveHighScore() {
 function setupInput() {
   document.addEventListener('keydown', handleKeyDown);
 
-  // Touch controls
+  // Touch swipe controls
   const gameCanvas = document.getElementById('game-canvas');
 
   gameCanvas.addEventListener('touchstart', handleTouchStart, { passive: false });
@@ -231,6 +250,24 @@ function setupInput() {
   const container = document.getElementById('game-container');
   container.addEventListener('touchstart', handleTouchStart, { passive: false });
   container.addEventListener('touchend', handleTouchEnd, { passive: false });
+
+  // Mobile button controls
+  const btnLeft = document.getElementById('btn-left');
+  const btnRight = document.getElementById('btn-right');
+
+  if (btnLeft) {
+    btnLeft.addEventListener('touchstart', (e) => {
+      e.preventDefault();
+      if (state.gameState === 'playing') movePlayer(-1);
+    }, { passive: false });
+  }
+
+  if (btnRight) {
+    btnRight.addEventListener('touchstart', (e) => {
+      e.preventDefault();
+      if (state.gameState === 'playing') movePlayer(1);
+    }, { passive: false });
+  }
 }
 
 function handleTouchStart(e) {
