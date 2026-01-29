@@ -1,223 +1,119 @@
 /**
- * NISHA GO! - Game Engine
- * Endless runner with lane movement, momentum system
+ * NISHA GO! - Simplified Game Engine
  */
 
-// ===== GAME CONFIGURATION =====
+// ===== CONFIG =====
 const CONFIG = {
-  // Canvas
-  CANVAS_WIDTH: 144,    // 3 lanes * 48px (divisible by 8)
-  CANVAS_HEIGHT: 256,   // Tall for runner feel
-  PIXEL_SCALE: 2,       // Integer scaling for crisp pixels
-
-  // Lanes
+  CANVAS_WIDTH: 144,
+  CANVAS_HEIGHT: 256,
   LANE_COUNT: 3,
   LANE_WIDTH: 48,
-
-  // Player
   PLAYER_SIZE: 32,
-  PLAYER_START_LANE: 1, // Middle lane (0-indexed)
-
-  // Obstacles (Chaos)
+  PLAYER_START_LANE: 1,
   CHAOS_SIZE: 24,
-  CHAOS_SPAWN_INTERVAL: 1800,   // ms (slower spawn)
-  CHAOS_MIN_INTERVAL: 600,      // Minimum spawn interval
-  CHAOS_SPEED: 1.2,             // pixels per frame (slower)
+  CHAOS_SPAWN_INTERVAL: 1800,
+  CHAOS_MIN_INTERVAL: 600,
+  CHAOS_SPEED: 1.2,
   CHAOS_MAX_SPEED: 4,
-
-  // Pickups (Trainers)
   TRAINER_SIZE: 20,
   TRAINER_SPAWN_INTERVAL: 3000,
-  TRAINER_SPEED: 1,             // slower
+  TRAINER_SPEED: 1,
   TRAINER_SCORE_BONUS: 100,
   TRAINER_MOMENTUM_BONUS: 20,
-
-  // Momentum
   MOMENTUM_MAX: 100,
-  MOMENTUM_DECAY: 0.02,         // per frame (slower decay)
-  MOMENTUM_MIN_DECAY: 0.05,     // max decay rate
-
-  // Scoring
+  MOMENTUM_DECAY: 0.02,
+  MOMENTUM_MIN_DECAY: 0.05,
   SCORE_PER_SECOND: 10,
-
-  // Difficulty
-  DIFFICULTY_INCREASE_INTERVAL: 8000, // ms (slower ramp)
+  DIFFICULTY_INCREASE_INTERVAL: 8000,
   DIFFICULTY_MULTIPLIER: 1.08
 };
 
-// ===== COLORS =====
 const COLORS = {
   BG: '#050505',
-  ORANGE_BRIGHT: '#FF8A00',
+  ORANGE: '#FF8A00',
   ORANGE_GLOW: '#FFB000',
   ORANGE_DIM: '#663700',
-  ORANGE_DARK: '#331c00',
   LANE_LINE: '#1a1a1a',
-  PLAYER: '#FF8A00',
-  PLAYER_OUTLINE: '#FFB000',
-  CHAOS: '#442200',
-  CHAOS_FILL: '#663700',
-  CHAOS_OUTLINE: '#FF5500',
-  TRAINER: '#FFB000',
-  TRAINER_INNER: '#FFCC44',
-  TRAINER_OUTLINE: '#FF8A00'
+  MOMENTUM_LOW: '#FF3300'
 };
 
-// ===== GAME STATE =====
+// ===== STATE =====
 const state = {
-  // Game status
-  gameState: 'start', // 'start', 'playing', 'paused', 'gameover'
-
-  // Player
+  gameState: 'start',
   playerLane: CONFIG.PLAYER_START_LANE,
   playerY: 0,
-
-  // Entities
   chaosBlocks: [],
   trainers: [],
   particles: [],
   scorePopups: [],
-
-  // Scoring
   score: 0,
   highScore: 0,
-
-  // Momentum
   momentum: CONFIG.MOMENTUM_MAX,
-
-  // Timing
   lastFrameTime: 0,
   lastChaosSpawn: 0,
   lastTrainerSpawn: 0,
   lastDifficultyIncrease: 0,
   gameStartTime: 0,
-
-  // Difficulty
   currentChaosInterval: CONFIG.CHAOS_SPAWN_INTERVAL,
   currentChaosSpeed: CONFIG.CHAOS_SPEED,
   currentMomentumDecay: CONFIG.MOMENTUM_DECAY,
   speedMultiplier: 1.0,
   waveNumber: 1,
-
-  // Reduced motion preference
   reducedMotion: false,
-
-  // Screen shake
   shakeIntensity: 0,
   shakeDuration: 0,
-
-  // Flash effect
   flashAlpha: 0,
-
-  // Touch controls
   touchStartX: 0,
   touchStartY: 0,
-
-  // Momentum warning
-  momentumWarned: false,
-
-  // FPS tracking
-  frameCount: 0,
-  lastFpsUpdate: 0,
-  currentFps: 60
+  momentumWarned: false
 };
 
-// ===== DOM ELEMENTS =====
+// ===== DOM =====
 let canvas, ctx;
 let startScreen, pauseScreen, gameoverScreen;
-let scoreDisplay, highscoreDisplay, momentumFill, momentumValue;
-let gameStateDisplay, speedDisplay, modeDisplay, laneDisplay, waveDisplay;
 let finalScore, finalHighscore, deathReasonDisplay;
-let sysRun, sysSnd, sysNet;
-let fpsDisplay;
 
-// ===== INITIALIZATION =====
+// ===== INIT =====
 function init() {
-  // Check reduced motion preference
   state.reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-  // Get DOM elements
   canvas = document.getElementById('game-canvas');
   ctx = canvas.getContext('2d');
 
   startScreen = document.getElementById('start-screen');
   pauseScreen = document.getElementById('pause-screen');
   gameoverScreen = document.getElementById('gameover-screen');
-
-  scoreDisplay = document.getElementById('score-display');
-  highscoreDisplay = document.getElementById('highscore-display');
-  momentumFill = document.getElementById('momentum-fill');
-  momentumValue = document.getElementById('momentum-value');
-  gameStateDisplay = document.getElementById('game-state');
-  speedDisplay = document.getElementById('speed-display');
-  modeDisplay = document.getElementById('mode-display');
-  laneDisplay = document.getElementById('lane-display');
-  waveDisplay = document.getElementById('wave-display');
   finalScore = document.getElementById('final-score');
   finalHighscore = document.getElementById('final-highscore');
   deathReasonDisplay = document.getElementById('death-reason');
-  sysRun = document.getElementById('sys-run');
-  sysSnd = document.getElementById('sys-snd');
-  sysNet = document.getElementById('sys-net');
-  fpsDisplay = document.getElementById('fps-display');
 
-  // Setup canvas
   setupCanvas();
-
-  // Load high score
   loadHighScore();
-
-  // Setup input handlers
   setupInput();
-
-  // Setup button handlers
   setupButtons();
 
-  // Generate session ID
-  generateSessionId();
-
-  // Start game loop
   requestAnimationFrame(gameLoop);
 }
 
-function generateSessionId() {
-  const chars = '0123456789ABCDEF';
-  let id = '0x';
-  for (let i = 0; i < 6; i++) {
-    id += chars[Math.floor(Math.random() * chars.length)];
-  }
-  document.getElementById('session-id').textContent = id;
-}
-
 function setupCanvas() {
-  // Set internal resolution
   canvas.width = CONFIG.CANVAS_WIDTH;
   canvas.height = CONFIG.CANVAS_HEIGHT;
-
-  // Responsive scaling
   resizeCanvas();
   window.addEventListener('resize', resizeCanvas);
-
-  // Disable image smoothing for crisp pixels
   ctx.imageSmoothingEnabled = false;
-
-  // Calculate player Y position (near bottom)
-  state.playerY = CONFIG.CANVAS_HEIGHT - CONFIG.PLAYER_SIZE - 32;
+  state.playerY = CONFIG.CANVAS_HEIGHT - CONFIG.PLAYER_SIZE - 24;
 }
 
 function resizeCanvas() {
   const wrapper = document.querySelector('.canvas-wrapper');
   if (!wrapper) return;
 
-  const wrapperWidth = wrapper.clientWidth - 8;
-  const wrapperHeight = wrapper.clientHeight - 8;
+  const maxWidth = wrapper.clientWidth - 20;
+  const maxHeight = wrapper.clientHeight - 20;
 
-  // Calculate scale to fit while maintaining aspect ratio
-  const scaleX = wrapperWidth / CONFIG.CANVAS_WIDTH;
-  const scaleY = wrapperHeight / CONFIG.CANVAS_HEIGHT;
+  const scaleX = maxWidth / CONFIG.CANVAS_WIDTH;
+  const scaleY = maxHeight / CONFIG.CANVAS_HEIGHT;
   const scale = Math.min(scaleX, scaleY);
-
-  // Use integer scaling when possible for crisp pixels
   const finalScale = scale >= 2 ? Math.floor(scale) : scale;
 
   canvas.style.width = Math.floor(CONFIG.CANVAS_WIDTH * finalScale) + 'px';
@@ -226,38 +122,28 @@ function resizeCanvas() {
 
 function loadHighScore() {
   const saved = localStorage.getItem('nisha-go-highscore');
-  if (saved) {
-    state.highScore = parseInt(saved, 10);
-    updateHighScoreDisplay();
-  }
+  if (saved) state.highScore = parseInt(saved, 10);
 }
 
 function saveHighScore() {
   localStorage.setItem('nisha-go-highscore', state.highScore.toString());
 }
 
-// ===== INPUT HANDLING =====
+// ===== INPUT =====
 function setupInput() {
   document.addEventListener('keydown', handleKeyDown);
 
-  // Touch swipe controls
-  const gameCanvas = document.getElementById('game-canvas');
-
-  gameCanvas.addEventListener('touchstart', handleTouchStart, { passive: false });
-  gameCanvas.addEventListener('touchend', handleTouchEnd, { passive: false });
-
-  // Also allow touch on the whole game container for mobile
   const container = document.getElementById('game-container');
   container.addEventListener('touchstart', handleTouchStart, { passive: false });
   container.addEventListener('touchend', handleTouchEnd, { passive: false });
 
-  // Mobile button controls
   const btnLeft = document.getElementById('btn-left');
   const btnRight = document.getElementById('btn-right');
 
   if (btnLeft) {
     btnLeft.addEventListener('touchstart', (e) => {
       e.preventDefault();
+      e.stopPropagation();
       if (state.gameState === 'playing') movePlayer(-1);
     }, { passive: false });
   }
@@ -265,85 +151,27 @@ function setupInput() {
   if (btnRight) {
     btnRight.addEventListener('touchstart', (e) => {
       e.preventDefault();
+      e.stopPropagation();
       if (state.gameState === 'playing') movePlayer(1);
     }, { passive: false });
-  }
-}
-
-function handleTouchStart(e) {
-  e.preventDefault();
-  const touch = e.touches[0];
-  state.touchStartX = touch.clientX;
-  state.touchStartY = touch.clientY;
-}
-
-function handleTouchEnd(e) {
-  e.preventDefault();
-  if (!e.changedTouches[0]) return;
-
-  const touch = e.changedTouches[0];
-  const deltaX = touch.clientX - state.touchStartX;
-  const deltaY = touch.clientY - state.touchStartY;
-
-  // Require minimum swipe distance
-  const minSwipe = 30;
-
-  // Horizontal swipe takes priority
-  if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > minSwipe) {
-    if (state.gameState === 'playing') {
-      if (deltaX > 0) {
-        movePlayer(1);  // Swipe right
-      } else {
-        movePlayer(-1); // Swipe left
-      }
-    }
-  } else if (Math.abs(deltaY) < minSwipe && Math.abs(deltaX) < minSwipe) {
-    // Tap (not a swipe) - start game or handle tap
-    if (state.gameState === 'start') {
-      startGame();
-    } else if (state.gameState === 'gameover') {
-      restartGame();
-    } else if (state.gameState === 'paused') {
-      togglePause();
-    }
-  }
-}
-
-function triggerScreenShake(intensity = 5, duration = 200) {
-  if (state.reducedMotion) return;
-  state.shakeIntensity = intensity;
-  state.shakeDuration = duration;
-}
-
-function updateScreenShake(deltaTime) {
-  if (state.shakeDuration > 0) {
-    state.shakeDuration -= deltaTime;
-    if (state.shakeDuration <= 0) {
-      state.shakeIntensity = 0;
-      state.shakeDuration = 0;
-    }
   }
 }
 
 function handleKeyDown(e) {
   const key = e.key.toLowerCase();
 
-  // Global controls
   if (key === 'escape') {
     e.preventDefault();
     togglePause();
     return;
   }
 
-  if (key === 'r') {
+  if (key === 'r' && (state.gameState === 'gameover' || state.gameState === 'paused')) {
     e.preventDefault();
-    if (state.gameState === 'gameover' || state.gameState === 'paused') {
-      restartGame();
-    }
+    restartGame();
     return;
   }
 
-  // Playing controls
   if (state.gameState === 'playing') {
     if (key === 'a' || key === 'arrowleft') {
       e.preventDefault();
@@ -354,12 +182,34 @@ function handleKeyDown(e) {
     }
   }
 
-  // Start screen - Space or Enter to start
-  if (state.gameState === 'start') {
-    if (key === ' ' || key === 'enter') {
-      e.preventDefault();
-      startGame();
+  if (state.gameState === 'start' && (key === ' ' || key === 'enter')) {
+    e.preventDefault();
+    startGame();
+  }
+}
+
+function handleTouchStart(e) {
+  const touch = e.touches[0];
+  state.touchStartX = touch.clientX;
+  state.touchStartY = touch.clientY;
+}
+
+function handleTouchEnd(e) {
+  if (!e.changedTouches[0]) return;
+
+  const touch = e.changedTouches[0];
+  const deltaX = touch.clientX - state.touchStartX;
+  const deltaY = touch.clientY - state.touchStartY;
+  const minSwipe = 30;
+
+  if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > minSwipe) {
+    if (state.gameState === 'playing') {
+      movePlayer(deltaX > 0 ? 1 : -1);
     }
+  } else if (Math.abs(deltaY) < minSwipe && Math.abs(deltaX) < minSwipe) {
+    if (state.gameState === 'start') startGame();
+    else if (state.gameState === 'gameover') restartGame();
+    else if (state.gameState === 'paused') togglePause();
   }
 }
 
@@ -367,67 +217,21 @@ function movePlayer(direction) {
   const newLane = state.playerLane + direction;
   if (newLane >= 0 && newLane < CONFIG.LANE_COUNT) {
     state.playerLane = newLane;
-    // Play move sound
     if (typeof Audio !== 'undefined') Audio.move();
   }
 }
 
-// ===== BUTTON HANDLERS =====
+// ===== BUTTONS =====
 function setupButtons() {
   document.getElementById('start-btn').addEventListener('click', startGame);
   document.getElementById('resume-btn').addEventListener('click', togglePause);
   document.getElementById('restart-btn').addEventListener('click', restartGame);
-  document.getElementById('btn-abort').addEventListener('click', abortGame);
-  document.getElementById('btn-export').addEventListener('click', exportScore);
-
-  // Sound toggle - click SND indicator
-  const sndIndicator = document.getElementById('sys-snd');
-  if (sndIndicator) {
-    sndIndicator.style.cursor = 'pointer';
-    sndIndicator.addEventListener('click', toggleSound);
-    // Initialize as active (sound on)
-    sndIndicator.classList.add('active');
-  }
 }
 
-function toggleSound() {
-  if (typeof Audio !== 'undefined') {
-    const enabled = Audio.toggle();
-    const sndIndicator = document.getElementById('sys-snd');
-    if (sndIndicator) {
-      if (enabled) {
-        sndIndicator.classList.add('active');
-      } else {
-        sndIndicator.classList.remove('active');
-      }
-    }
-  }
-}
-
-function abortGame() {
-  if (state.gameState === 'playing' || state.gameState === 'paused') {
-    endGame();
-  }
-}
-
-function exportScore() {
-  const data = {
-    game: 'NISHA GO!',
-    score: state.score,
-    highScore: state.highScore,
-    timestamp: new Date().toISOString()
-  };
-  console.log('SCORE EXPORT:', JSON.stringify(data, null, 2));
-  alert('Score exported to console!');
-}
-
-// ===== GAME STATE MANAGEMENT =====
+// ===== GAME STATE =====
 function startGame() {
   state.gameState = 'playing';
   state.momentumWarned = false;
-
-  // Play start sound
-  if (typeof Audio !== 'undefined') Audio.start();
   state.playerLane = CONFIG.PLAYER_START_LANE;
   state.chaosBlocks = [];
   state.trainers = [];
@@ -445,77 +249,48 @@ function startGame() {
   state.lastTrainerSpawn = 0;
   state.lastDifficultyIncrease = 0;
 
+  if (typeof Audio !== 'undefined') Audio.start();
+
   startScreen.classList.add('hidden');
   pauseScreen.classList.add('hidden');
   gameoverScreen.classList.add('hidden');
-
-  updateHUD();
-  updateModeDisplay('ACTIVE');
-  updateGameStateDisplay('RUN');
-  updateSysIndicators(true);
 }
 
 function togglePause() {
   if (state.gameState === 'playing') {
     state.gameState = 'paused';
     pauseScreen.classList.remove('hidden');
-    updateModeDisplay('PAUSED');
-    updateGameStateDisplay('HALT');
-    updateSysIndicators(false);
     document.getElementById('resume-btn').focus();
   } else if (state.gameState === 'paused') {
     state.gameState = 'playing';
     pauseScreen.classList.add('hidden');
-    updateModeDisplay('ACTIVE');
-    updateGameStateDisplay('RUN');
-    updateSysIndicators(true);
   }
 }
 
 function endGame(reason = 'collision') {
   state.gameState = 'gameover';
-  state.deathReason = reason;
 
-  // Sound, screen shake, and flash
   if (typeof Audio !== 'undefined') {
     Audio.hit();
     setTimeout(() => Audio.gameOver(), 200);
   }
   triggerScreenShake(8, 300);
-  if (!state.reducedMotion) {
-    state.flashAlpha = 0.8; // Trigger flash
-  }
+  if (!state.reducedMotion) state.flashAlpha = 0.8;
 
-  // Update high score if needed
   const isNewRecord = state.score > state.highScore;
   if (isNewRecord) {
     state.highScore = state.score;
     saveHighScore();
   }
 
-  // Show/hide new record indicator
-  const newRecordEl = document.getElementById('new-record');
-  if (isNewRecord) {
-    newRecordEl.classList.remove('hidden');
-  } else {
-    newRecordEl.classList.add('hidden');
-  }
-
-  // Update game over screen
   finalScore.textContent = formatScore(state.score);
   finalHighscore.textContent = formatScore(state.highScore);
+  deathReasonDisplay.textContent = reason === 'momentum' ? 'NO MOMENTUM' : 'COLLISION';
 
-  // Update death reason
-  if (reason === 'momentum') {
-    deathReasonDisplay.textContent = 'MOMENTUM DEPLETED';
-  } else {
-    deathReasonDisplay.textContent = 'COLLISION DETECTED';
-  }
+  const newRecordEl = document.getElementById('new-record');
+  newRecordEl.classList.toggle('hidden', !isNewRecord);
 
   gameoverScreen.classList.remove('hidden');
-  updateModeDisplay('ENDED');
-  updateGameStateDisplay('FAIL');
-  updateSysIndicators(false);
   document.getElementById('restart-btn').focus();
 }
 
@@ -530,17 +305,6 @@ function gameLoop(timestamp) {
   const deltaTime = timestamp - state.lastFrameTime;
   state.lastFrameTime = timestamp;
 
-  // FPS tracking
-  state.frameCount++;
-  if (timestamp - state.lastFpsUpdate >= 1000) {
-    state.currentFps = state.frameCount;
-    state.frameCount = 0;
-    state.lastFpsUpdate = timestamp;
-    if (fpsDisplay) {
-      fpsDisplay.textContent = state.currentFps;
-    }
-  }
-
   if (state.gameState === 'playing') {
     update(timestamp, deltaTime);
   }
@@ -552,10 +316,8 @@ function gameLoop(timestamp) {
 function update(timestamp, deltaTime) {
   const gameTime = timestamp - state.gameStartTime;
 
-  // Update score (time-based)
   state.score += CONFIG.SCORE_PER_SECOND * (deltaTime / 1000);
 
-  // Decay momentum
   state.momentum -= state.currentMomentumDecay;
   if (state.momentum <= 0) {
     state.momentum = 0;
@@ -563,66 +325,46 @@ function update(timestamp, deltaTime) {
     return;
   }
 
-  // Spawn chaos blocks
+  if (state.momentum < 25 && !state.momentumWarned) {
+    if (typeof Audio !== 'undefined') Audio.momentumLow();
+    state.momentumWarned = true;
+  }
+
   if (gameTime - state.lastChaosSpawn > state.currentChaosInterval) {
     spawnChaos();
     state.lastChaosSpawn = gameTime;
   }
 
-  // Spawn trainers
   if (gameTime - state.lastTrainerSpawn > CONFIG.TRAINER_SPAWN_INTERVAL) {
     spawnTrainer();
     state.lastTrainerSpawn = gameTime;
   }
 
-  // Increase difficulty
   if (gameTime - state.lastDifficultyIncrease > CONFIG.DIFFICULTY_INCREASE_INTERVAL) {
     increaseDifficulty();
     state.lastDifficultyIncrease = gameTime;
   }
 
-  // Update chaos blocks
   updateChaosBlocks();
-
-  // Update trainers
   updateTrainers();
-
-  // Check collisions
   checkCollisions();
-
-  // Update particles and popups
   updateParticles();
   updateScorePopups();
-
-  // Update HUD
-  updateHUD();
 }
 
 // ===== SPAWNING =====
 function spawnChaos() {
-  // Pick a random lane
-  const lane = Math.floor(Math.random() * CONFIG.LANE_COUNT);
-
   state.chaosBlocks.push({
-    lane: lane,
+    lane: Math.floor(Math.random() * CONFIG.LANE_COUNT),
     y: -CONFIG.CHAOS_SIZE,
     speed: state.currentChaosSpeed
   });
 }
 
 function spawnTrainer() {
-  // Pick a random lane (try to avoid recent chaos)
   let lane = Math.floor(Math.random() * CONFIG.LANE_COUNT);
-
-  // Check if a chaos block is in this lane near top
-  const chaosInLane = state.chaosBlocks.some(
-    c => c.lane === lane && c.y < CONFIG.CANVAS_HEIGHT / 3
-  );
-
-  if (chaosInLane && Math.random() > 0.5) {
-    // Try another lane
-    lane = (lane + 1) % CONFIG.LANE_COUNT;
-  }
+  const chaosInLane = state.chaosBlocks.some(c => c.lane === lane && c.y < CONFIG.CANVAS_HEIGHT / 3);
+  if (chaosInLane && Math.random() > 0.5) lane = (lane + 1) % CONFIG.LANE_COUNT;
 
   state.trainers.push({
     lane: lane,
@@ -631,14 +373,11 @@ function spawnTrainer() {
   });
 }
 
-// ===== ENTITY UPDATES =====
+// ===== UPDATES =====
 function updateChaosBlocks() {
   for (let i = state.chaosBlocks.length - 1; i >= 0; i--) {
-    const chaos = state.chaosBlocks[i];
-    chaos.y += chaos.speed;
-
-    // Remove if off screen
-    if (chaos.y > CONFIG.CANVAS_HEIGHT) {
+    state.chaosBlocks[i].y += state.chaosBlocks[i].speed;
+    if (state.chaosBlocks[i].y > CONFIG.CANVAS_HEIGHT) {
       state.chaosBlocks.splice(i, 1);
     }
   }
@@ -646,67 +385,37 @@ function updateChaosBlocks() {
 
 function updateTrainers() {
   for (let i = state.trainers.length - 1; i >= 0; i--) {
-    const trainer = state.trainers[i];
-    trainer.y += trainer.speed;
-
-    // Remove if off screen
-    if (trainer.y > CONFIG.CANVAS_HEIGHT) {
+    state.trainers[i].y += state.trainers[i].speed;
+    if (state.trainers[i].y > CONFIG.CANVAS_HEIGHT) {
       state.trainers.splice(i, 1);
     }
   }
 }
 
-// ===== COLLISION DETECTION =====
 function checkCollisions() {
   const playerX = getPlayerX();
-  const playerRect = {
-    x: playerX,
-    y: state.playerY,
-    w: CONFIG.PLAYER_SIZE,
-    h: CONFIG.PLAYER_SIZE
-  };
+  const playerRect = { x: playerX, y: state.playerY, w: CONFIG.PLAYER_SIZE, h: CONFIG.PLAYER_SIZE };
 
-  // Check chaos collisions
   for (const chaos of state.chaosBlocks) {
     const chaosX = getLaneX(chaos.lane) + (CONFIG.LANE_WIDTH - CONFIG.CHAOS_SIZE) / 2;
-    const chaosRect = {
-      x: chaosX,
-      y: chaos.y,
-      w: CONFIG.CHAOS_SIZE,
-      h: CONFIG.CHAOS_SIZE
-    };
-
-    if (rectsIntersect(playerRect, chaosRect)) {
-      endGame();
+    if (rectsIntersect(playerRect, { x: chaosX, y: chaos.y, w: CONFIG.CHAOS_SIZE, h: CONFIG.CHAOS_SIZE })) {
+      endGame('collision');
       return;
     }
   }
 
-  // Check trainer collisions
   for (let i = state.trainers.length - 1; i >= 0; i--) {
     const trainer = state.trainers[i];
     const trainerX = getLaneX(trainer.lane) + (CONFIG.LANE_WIDTH - CONFIG.TRAINER_SIZE) / 2;
-    const trainerRect = {
-      x: trainerX,
-      y: trainer.y,
-      w: CONFIG.TRAINER_SIZE,
-      h: CONFIG.TRAINER_SIZE
-    };
-
-    if (rectsIntersect(playerRect, trainerRect)) {
-      // Collect trainer
+    if (rectsIntersect(playerRect, { x: trainerX, y: trainer.y, w: CONFIG.TRAINER_SIZE, h: CONFIG.TRAINER_SIZE })) {
       state.score += CONFIG.TRAINER_SCORE_BONUS;
       state.momentum = Math.min(CONFIG.MOMENTUM_MAX, state.momentum + CONFIG.TRAINER_MOMENTUM_BONUS);
-      state.momentumWarned = false; // Reset warning
+      state.momentumWarned = false;
 
-      // Play collect sound
       if (typeof Audio !== 'undefined') Audio.collect();
 
-      // Spawn particles and score popup
-      const cx = trainerX + CONFIG.TRAINER_SIZE / 2;
-      const cy = trainer.y + CONFIG.TRAINER_SIZE / 2;
-      spawnParticles(cx, cy);
-      spawnScorePopup(cx, cy - 10, '+' + CONFIG.TRAINER_SCORE_BONUS);
+      spawnParticles(trainerX + CONFIG.TRAINER_SIZE / 2, trainer.y + CONFIG.TRAINER_SIZE / 2);
+      spawnScorePopup(trainerX + CONFIG.TRAINER_SIZE / 2, trainer.y, '+' + CONFIG.TRAINER_SCORE_BONUS);
 
       state.trainers.splice(i, 1);
     }
@@ -714,27 +423,15 @@ function checkCollisions() {
 }
 
 function rectsIntersect(a, b) {
-  return a.x < b.x + b.w &&
-         a.x + a.w > b.x &&
-         a.y < b.y + b.h &&
-         a.y + a.h > b.y;
+  return a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y;
 }
 
 // ===== PARTICLES =====
 function spawnParticles(x, y) {
-  // Don't spawn particles if reduced motion
   if (state.reducedMotion) return;
-
   for (let i = 0; i < 8; i++) {
     const angle = (Math.PI * 2 / 8) * i;
-    state.particles.push({
-      x: x,
-      y: y,
-      vx: Math.cos(angle) * 2,
-      vy: Math.sin(angle) * 2,
-      life: 20,
-      maxLife: 20
-    });
+    state.particles.push({ x, y, vx: Math.cos(angle) * 2, vy: Math.sin(angle) * 2, life: 20, maxLife: 20 });
   }
 }
 
@@ -743,157 +440,98 @@ function updateParticles() {
     const p = state.particles[i];
     p.x += p.vx;
     p.y += p.vy;
-    p.life--;
-
-    if (p.life <= 0) {
-      state.particles.splice(i, 1);
-    }
-  }
-}
-
-function drawParticles() {
-  for (const p of state.particles) {
-    const alpha = p.life / p.maxLife;
-    ctx.fillStyle = `rgba(255, 176, 0, ${alpha})`;
-    ctx.fillRect(p.x - 2, p.y - 2, 4, 4);
+    if (--p.life <= 0) state.particles.splice(i, 1);
   }
 }
 
 // ===== SCORE POPUPS =====
 function spawnScorePopup(x, y, text) {
-  state.scorePopups.push({
-    x: x,
-    y: y,
-    text: text,
-    life: 30,
-    maxLife: 30
-  });
+  state.scorePopups.push({ x, y, text, life: 30, maxLife: 30 });
 }
 
 function updateScorePopups() {
   for (let i = state.scorePopups.length - 1; i >= 0; i--) {
-    const popup = state.scorePopups[i];
-    popup.y -= 1;
-    popup.life--;
-
-    if (popup.life <= 0) {
-      state.scorePopups.splice(i, 1);
-    }
+    state.scorePopups[i].y -= 1;
+    if (--state.scorePopups[i].life <= 0) state.scorePopups.splice(i, 1);
   }
-}
-
-function drawScorePopups() {
-  ctx.font = '10px monospace';
-  ctx.textAlign = 'center';
-
-  for (const popup of state.scorePopups) {
-    const alpha = popup.life / popup.maxLife;
-    ctx.fillStyle = `rgba(255, 204, 68, ${alpha})`;
-    ctx.fillText(popup.text, popup.x, popup.y);
-  }
-
-  ctx.textAlign = 'left';
 }
 
 // ===== DIFFICULTY =====
 function increaseDifficulty() {
-  // Increase wave number
   state.waveNumber++;
-
-  // Increase chaos speed
-  state.currentChaosSpeed = Math.min(
-    CONFIG.CHAOS_MAX_SPEED,
-    state.currentChaosSpeed * CONFIG.DIFFICULTY_MULTIPLIER
-  );
-
-  // Decrease spawn interval
-  state.currentChaosInterval = Math.max(
-    CONFIG.CHAOS_MIN_INTERVAL,
-    state.currentChaosInterval / CONFIG.DIFFICULTY_MULTIPLIER
-  );
-
-  // Increase momentum decay
-  state.currentMomentumDecay = Math.min(
-    CONFIG.MOMENTUM_MIN_DECAY,
-    state.currentMomentumDecay * CONFIG.DIFFICULTY_MULTIPLIER
-  );
-
-  // Update speed multiplier for display
+  state.currentChaosSpeed = Math.min(CONFIG.CHAOS_MAX_SPEED, state.currentChaosSpeed * CONFIG.DIFFICULTY_MULTIPLIER);
+  state.currentChaosInterval = Math.max(CONFIG.CHAOS_MIN_INTERVAL, state.currentChaosInterval / CONFIG.DIFFICULTY_MULTIPLIER);
+  state.currentMomentumDecay = Math.min(CONFIG.MOMENTUM_MIN_DECAY, state.currentMomentumDecay * CONFIG.DIFFICULTY_MULTIPLIER);
   state.speedMultiplier *= CONFIG.DIFFICULTY_MULTIPLIER;
 }
 
-// ===== RENDERING =====
+// ===== SCREEN EFFECTS =====
+function triggerScreenShake(intensity = 5, duration = 200) {
+  if (state.reducedMotion) return;
+  state.shakeIntensity = intensity;
+  state.shakeDuration = duration;
+}
+
+function updateScreenShake(deltaTime) {
+  if (state.shakeDuration > 0) {
+    state.shakeDuration -= deltaTime;
+    if (state.shakeDuration <= 0) {
+      state.shakeIntensity = 0;
+      state.shakeDuration = 0;
+    }
+  }
+}
+
+// ===== RENDER =====
 function render(deltaTime = 16) {
-  // Update screen shake
   updateScreenShake(deltaTime);
 
-  // Apply screen shake offset
   ctx.save();
   if (state.shakeIntensity > 0) {
-    const shakeX = (Math.random() - 0.5) * state.shakeIntensity;
-    const shakeY = (Math.random() - 0.5) * state.shakeIntensity;
-    ctx.translate(shakeX, shakeY);
+    ctx.translate((Math.random() - 0.5) * state.shakeIntensity, (Math.random() - 0.5) * state.shakeIntensity);
   }
 
-  // Clear canvas
+  // Background
   ctx.fillStyle = COLORS.BG;
   ctx.fillRect(-10, -10, CONFIG.CANVAS_WIDTH + 20, CONFIG.CANVAS_HEIGHT + 20);
 
-  // Draw lane dividers
+  // Lanes
   drawLanes();
 
-  // Draw entities
+  // Entities
   drawTrainers(deltaTime);
   drawChaosBlocks();
   drawPlayer(deltaTime);
   drawParticles();
   drawScorePopups();
 
-  // Draw flash effect
+  // HUD on canvas
+  drawHUD();
+
+  // Flash
   if (state.flashAlpha > 0) {
     ctx.fillStyle = `rgba(255, 100, 0, ${state.flashAlpha})`;
     ctx.fillRect(0, 0, CONFIG.CANVAS_WIDTH, CONFIG.CANVAS_HEIGHT);
-    state.flashAlpha -= 0.05; // Fade out
-    if (state.flashAlpha < 0) state.flashAlpha = 0;
+    state.flashAlpha -= 0.05;
   }
 
-  // Restore canvas state (after shake)
   ctx.restore();
 }
 
 function drawLanes() {
-  // Lane backgrounds (subtle)
   ctx.fillStyle = '#080808';
   ctx.fillRect(CONFIG.LANE_WIDTH, 0, CONFIG.LANE_WIDTH, CONFIG.CANVAS_HEIGHT);
 
   ctx.strokeStyle = COLORS.LANE_LINE;
   ctx.lineWidth = 1;
-
-  // Vertical lane dividers
+  ctx.setLineDash([8, 8]);
   for (let i = 1; i < CONFIG.LANE_COUNT; i++) {
-    const x = i * CONFIG.LANE_WIDTH;
     ctx.beginPath();
-    ctx.setLineDash([8, 8]);
-    ctx.moveTo(x, 0);
-    ctx.lineTo(x, CONFIG.CANVAS_HEIGHT);
+    ctx.moveTo(i * CONFIG.LANE_WIDTH, 0);
+    ctx.lineTo(i * CONFIG.LANE_WIDTH, CONFIG.CANVAS_HEIGHT);
     ctx.stroke();
   }
   ctx.setLineDash([]);
-
-  // Player zone indicator
-  ctx.strokeStyle = COLORS.ORANGE_DIM;
-  ctx.lineWidth = 1;
-  ctx.setLineDash([4, 4]);
-  ctx.strokeRect(4, state.playerY - 8, CONFIG.CANVAS_WIDTH - 8, CONFIG.PLAYER_SIZE + 16);
-  ctx.setLineDash([]);
-
-  // Top and bottom edge markers
-  ctx.fillStyle = COLORS.ORANGE_DIM;
-  for (let i = 0; i < CONFIG.LANE_COUNT; i++) {
-    const lx = i * CONFIG.LANE_WIDTH + CONFIG.LANE_WIDTH / 2 - 2;
-    ctx.fillRect(lx, 2, 4, 4);
-    ctx.fillRect(lx, CONFIG.CANVAS_HEIGHT - 6, 4, 4);
-  }
 }
 
 function drawPlayer(deltaTime) {
@@ -901,22 +539,13 @@ function drawPlayer(deltaTime) {
   const y = state.playerY;
   const size = CONFIG.PLAYER_SIZE;
 
-  // Determine animation: run while playing, idle otherwise
-  let animation = 'idle';
-  if (state.gameState === 'playing') {
-    animation = 'run';
-  }
+  let animation = state.gameState === 'playing' ? 'run' : 'idle';
 
-  // Use sprites if loaded
   if (typeof Sprites !== 'undefined' && Sprites.loaded) {
     Sprites.drawNisha(ctx, x, y, size, size, animation, deltaTime);
   } else {
-    // Fallback: simple rectangle
-    ctx.fillStyle = COLORS.PLAYER;
+    ctx.fillStyle = COLORS.ORANGE;
     ctx.fillRect(x + 2, y + 2, size - 4, size - 4);
-    ctx.strokeStyle = COLORS.PLAYER_OUTLINE;
-    ctx.lineWidth = 2;
-    ctx.strokeRect(x + 1, y + 1, size - 2, size - 2);
   }
 }
 
@@ -924,16 +553,12 @@ function drawChaosBlocks() {
   for (const chaos of state.chaosBlocks) {
     const size = CONFIG.CHAOS_SIZE;
     const x = getLaneX(chaos.lane) + (CONFIG.LANE_WIDTH - size) / 2;
-    const y = chaos.y;
 
     if (typeof Sprites !== 'undefined' && Sprites.loaded) {
-      Sprites.drawChaos(ctx, x, y, size);
+      Sprites.drawChaos(ctx, x, chaos.y, size);
     } else {
-      ctx.fillStyle = COLORS.CHAOS_FILL;
-      ctx.fillRect(x, y, size, size);
-      ctx.strokeStyle = COLORS.CHAOS_OUTLINE;
-      ctx.lineWidth = 2;
-      ctx.strokeRect(x, y, size, size);
+      ctx.fillStyle = COLORS.ORANGE_DIM;
+      ctx.fillRect(x, chaos.y, size, size);
     }
   }
 }
@@ -942,26 +567,61 @@ function drawTrainers(deltaTime) {
   for (const trainer of state.trainers) {
     const size = CONFIG.TRAINER_SIZE;
     const x = getLaneX(trainer.lane) + (CONFIG.LANE_WIDTH - size) / 2;
-    const y = trainer.y;
 
     if (typeof Sprites !== 'undefined' && Sprites.loaded) {
-      Sprites.drawTrainer(ctx, x, y, size, deltaTime);
+      Sprites.drawTrainer(ctx, x, trainer.y, size);
     } else {
-      const cx = x + size / 2;
-      const cy = y + size / 2;
-      ctx.fillStyle = COLORS.TRAINER;
-      ctx.beginPath();
-      ctx.moveTo(cx, y);
-      ctx.lineTo(x + size, cy);
-      ctx.lineTo(cx, y + size);
-      ctx.lineTo(x, cy);
-      ctx.closePath();
-      ctx.fill();
+      ctx.fillStyle = COLORS.ORANGE_GLOW;
+      ctx.fillRect(x, trainer.y, size, size);
     }
   }
 }
 
-// ===== UTILITY FUNCTIONS =====
+function drawParticles() {
+  for (const p of state.particles) {
+    ctx.fillStyle = `rgba(255, 176, 0, ${p.life / p.maxLife})`;
+    ctx.fillRect(p.x - 2, p.y - 2, 4, 4);
+  }
+}
+
+function drawScorePopups() {
+  ctx.font = 'bold 10px monospace';
+  ctx.textAlign = 'center';
+  for (const popup of state.scorePopups) {
+    ctx.fillStyle = `rgba(255, 204, 68, ${popup.life / popup.maxLife})`;
+    ctx.fillText(popup.text, popup.x, popup.y);
+  }
+  ctx.textAlign = 'left';
+}
+
+function drawHUD() {
+  // Score (top right)
+  ctx.font = 'bold 12px monospace';
+  ctx.textAlign = 'right';
+  ctx.fillStyle = COLORS.ORANGE_GLOW;
+  ctx.fillText(formatScore(state.score), CONFIG.CANVAS_WIDTH - 6, 14);
+
+  // Momentum bar (top left)
+  const barWidth = 50;
+  const barHeight = 6;
+  const barX = 6;
+  const barY = 6;
+  const momentumPercent = state.momentum / CONFIG.MOMENTUM_MAX;
+
+  ctx.fillStyle = '#222';
+  ctx.fillRect(barX, barY, barWidth, barHeight);
+
+  ctx.fillStyle = momentumPercent < 0.25 ? COLORS.MOMENTUM_LOW : COLORS.ORANGE;
+  ctx.fillRect(barX, barY, barWidth * momentumPercent, barHeight);
+
+  ctx.strokeStyle = COLORS.ORANGE_DIM;
+  ctx.lineWidth = 1;
+  ctx.strokeRect(barX, barY, barWidth, barHeight);
+
+  ctx.textAlign = 'left';
+}
+
+// ===== UTILS =====
 function getLaneX(lane) {
   return lane * CONFIG.LANE_WIDTH;
 }
@@ -972,64 +632,6 @@ function getPlayerX() {
 
 function formatScore(score) {
   return Math.floor(score).toString().padStart(5, '0');
-}
-
-// ===== HUD UPDATES =====
-function updateHUD() {
-  scoreDisplay.textContent = formatScore(state.score);
-  highscoreDisplay.textContent = formatScore(state.highScore);
-
-  const momentumPercent = Math.max(0, Math.min(100, state.momentum));
-  momentumFill.style.width = momentumPercent + '%';
-  momentumValue.textContent = Math.floor(momentumPercent) + '%';
-
-  // Color momentum bar based on level
-  if (momentumPercent < 25) {
-    momentumFill.style.background = '#FF3300';
-    // Warning sound when low
-    if (!state.momentumWarned && typeof Audio !== 'undefined') {
-      Audio.momentumLow();
-      state.momentumWarned = true;
-    }
-  } else if (momentumPercent < 50) {
-    momentumFill.style.background = COLORS.ORANGE_BRIGHT;
-  } else {
-    momentumFill.style.background = COLORS.ORANGE_GLOW;
-  }
-
-  speedDisplay.textContent = state.speedMultiplier.toFixed(1) + 'x';
-
-  // Lane display (L/C/R)
-  const laneNames = ['L', 'C', 'R'];
-  laneDisplay.textContent = laneNames[state.playerLane];
-
-  // Wave display
-  waveDisplay.textContent = state.waveNumber.toString().padStart(2, '0');
-
-  // Update mini-grid radar
-  if (typeof UIElements !== 'undefined' && UIElements.updateMiniGrid) {
-    UIElements.updateMiniGrid(state.playerLane, state.chaosBlocks, state.trainers);
-  }
-}
-
-function updateHighScoreDisplay() {
-  highscoreDisplay.textContent = formatScore(state.highScore);
-}
-
-function updateModeDisplay(mode) {
-  modeDisplay.textContent = mode;
-}
-
-function updateGameStateDisplay(newState) {
-  gameStateDisplay.textContent = newState;
-}
-
-function updateSysIndicators(running) {
-  if (running) {
-    sysRun.classList.add('active');
-  } else {
-    sysRun.classList.remove('active');
-  }
 }
 
 // ===== START =====

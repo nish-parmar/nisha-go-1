@@ -10,204 +10,9 @@
 </head>
 <body>
   <div id="game-container">
-    <!-- TOP BAR -->
-    <header class="top-bar">
-      <div class="bar-segment">
-        <span class="label">SESSION</span>
-        <span class="value" id="session-id">0xN1SHA</span>
-      </div>
-      <div class="bar-segment">
-        <span class="label">GRID</span>
-        <span class="value">3x16</span>
-      </div>
-      <div class="bar-segment">
-        <span class="label">MODE</span>
-        <span class="value" id="mode-display">STANDBY</span>
-      </div>
-      <div class="bar-segment">
-        <span class="label">PARAM</span>
-        <span class="value">ARCADE</span>
-      </div>
-      <div class="bar-segment flex-end">
-        <span class="label">BUILD</span>
-        <span class="value">v1.0.0</span>
-      </div>
-    </header>
-
-    <!-- MAIN AREA -->
-    <main class="main-area">
-      <!-- LEFT PANEL -->
-      <aside class="left-panel">
-        <div class="panel-box">
-          <div class="panel-header">PREVIEW</div>
-          <div class="preview-content">
-            <div class="mini-grid" id="mini-grid"></div>
-          </div>
-        </div>
-        <div class="panel-box">
-          <div class="panel-header">LEGEND</div>
-          <div class="legend-content">
-            <div class="legend-item">
-              <span class="legend-icon player-icon"></span>
-              <span>NISHA</span>
-            </div>
-            <div class="legend-item">
-              <span class="legend-icon trainer-icon"></span>
-              <span>TRAINER</span>
-            </div>
-            <div class="legend-item">
-              <span class="legend-icon chaos-icon"></span>
-              <span>CHAOS</span>
-            </div>
-          </div>
-        </div>
-      </aside>
-
-      <!-- CENTER: GAME CANVAS -->
-      <section class="center-panel">
-        <div class="panel-box game-panel">
-          <div class="panel-header">PLAY AREA</div>
-          <div class="canvas-wrapper">
-            <canvas id="game-canvas"></canvas>
-            <div class="scanlines" id="scanlines"></div>
-            <div class="noise-overlay"></div>
-          </div>
-        </div>
-      </section>
-
-      <!-- RIGHT PANELS -->
-      <aside class="right-panel">
-        <div class="panel-box">
-          <div class="panel-header">STATUS</div>
-          <div class="status-content">
-            <div class="status-row">
-              <span class="label">STATE</span>
-              <span class="value" id="game-state">IDLE</span>
-            </div>
-            <div class="status-row">
-              <span class="label">SPEED</span>
-              <span class="value" id="speed-display">1.0x</span>
-            </div>
-            <div class="status-row">
-              <span class="label">LANE</span>
-              <span class="value" id="lane-display">--</span>
-            </div>
-            <div class="status-row">
-              <span class="label">WAVE</span>
-              <span class="value" id="wave-display">01</span>
-            </div>
-          </div>
-        </div>
-        <div class="panel-box">
-          <div class="panel-header">MOMENTUM</div>
-          <div class="momentum-content">
-            <div class="momentum-bar">
-              <div class="momentum-fill" id="momentum-fill"></div>
-              <div class="momentum-ticks">
-                <span class="tick"></span>
-                <span class="tick"></span>
-                <span class="tick"></span>
-                <span class="tick"></span>
-              </div>
-            </div>
-            <div class="momentum-labels">
-              <span>0</span>
-              <span>50</span>
-              <span>100</span>
-            </div>
-            <div class="momentum-value" id="momentum-value">100%</div>
-          </div>
-        </div>
-        <div class="panel-box">
-          <div class="panel-header">SCORE</div>
-          <div class="score-content">
-            <div class="score-value" id="score-display">00000</div>
-            <div class="score-label">POINTS</div>
-          </div>
-        </div>
-        <div class="panel-box">
-          <div class="panel-header">HIGH SCORE</div>
-          <div class="score-content">
-            <div class="score-value" id="highscore-display">00000</div>
-            <div class="score-label">BEST</div>
-          </div>
-        </div>
-        <div class="panel-box mini-panel">
-          <div class="panel-header">SYS</div>
-          <div class="sys-content">
-            <span class="sys-indicator active" id="sys-run">RUN</span>
-            <span class="sys-indicator" id="sys-snd">SND</span>
-            <span class="sys-indicator" id="sys-net">NET</span>
-          </div>
-        </div>
-      </aside>
-    </main>
-
-    <!-- BOTTOM BAR -->
-    <footer class="bottom-bar">
-      <div class="slot-group">
-        <div class="slot" title="Slot 1">01</div>
-        <div class="slot" title="Slot 2">02</div>
-        <div class="slot" title="Slot 3">03</div>
-        <div class="slot active" title="Active Slot">04</div>
-      </div>
-      <div class="bar-divider"></div>
-      <div class="bar-info">
-        <span class="label">FPS</span>
-        <span class="value" id="fps-display">60</span>
-      </div>
-      <div class="bar-info">
-        <span class="label">MEM</span>
-        <span class="value">OK</span>
-      </div>
-      <div class="bar-spacer"></div>
-      <div class="bar-info hotkey">
-        <span class="key-hint">ESC</span>
-        <span class="label">PAUSE</span>
-      </div>
-      <div class="bar-info hotkey">
-        <span class="key-hint">R</span>
-        <span class="label">RESET</span>
-      </div>
-      <div class="bar-divider"></div>
-      <button class="bar-btn" id="btn-abort">ABORT</button>
-      <button class="bar-btn" id="btn-export">EXPORT</button>
-    </footer>
-
-    <!-- START SCREEN OVERLAY -->
-    <div class="overlay" id="start-screen">
-      <div class="overlay-box">
-        <h1 class="game-title">NISHA GO!</h1>
-        <p class="subtitle">DODGE CHAOS. COLLECT TRAINERS. KEEP MOMENTUM.</p>
-        <div class="controls-list">
-          <div class="control-item">
-            <span class="key">A / LEFT</span>
-            <span class="desc">MOVE LEFT</span>
-          </div>
-          <div class="control-item">
-            <span class="key">D / RIGHT</span>
-            <span class="desc">MOVE RIGHT</span>
-          </div>
-          <div class="control-item">
-            <span class="key">ESC</span>
-            <span class="desc">PAUSE</span>
-          </div>
-          <div class="control-item">
-            <span class="key">R</span>
-            <span class="desc">RESTART</span>
-          </div>
-        </div>
-        <button class="start-btn" id="start-btn" autofocus>START GAME</button>
-      </div>
-    </div>
-
-    <!-- PAUSE OVERLAY -->
-    <div class="overlay hidden" id="pause-screen">
-      <div class="overlay-box">
-        <h2 class="overlay-title">PAUSED</h2>
-        <p class="overlay-text">PRESS ESC TO RESUME</p>
-        <button class="start-btn" id="resume-btn">RESUME</button>
-      </div>
+    <!-- GAME CANVAS -->
+    <div class="canvas-wrapper">
+      <canvas id="game-canvas"></canvas>
     </div>
 
     <!-- MOBILE CONTROLS -->
@@ -216,30 +21,55 @@
       <button class="mobile-btn" id="btn-right" aria-label="Move right">▶</button>
     </div>
 
+    <!-- START SCREEN OVERLAY -->
+    <div class="overlay" id="start-screen">
+      <div class="overlay-box">
+        <h1 class="game-title">NISHA GO!</h1>
+        <p class="subtitle">DODGE CHAOS. COLLECT TRAINERS. KEEP MOMENTUM.</p>
+        <div class="controls-list">
+          <div class="control-item">
+            <span class="key">◀ / ▶</span>
+            <span class="desc">MOVE</span>
+          </div>
+          <div class="control-item">
+            <span class="key">ESC</span>
+            <span class="desc">PAUSE</span>
+          </div>
+        </div>
+        <button class="start-btn" id="start-btn" autofocus>START</button>
+      </div>
+    </div>
+
+    <!-- PAUSE OVERLAY -->
+    <div class="overlay hidden" id="pause-screen">
+      <div class="overlay-box">
+        <h2 class="overlay-title">PAUSED</h2>
+        <button class="start-btn" id="resume-btn">RESUME</button>
+      </div>
+    </div>
+
     <!-- GAME OVER OVERLAY -->
     <div class="overlay hidden" id="gameover-screen">
       <div class="overlay-box">
         <h2 class="overlay-title">GAME OVER</h2>
-        <p class="death-reason" id="death-reason">COLLISION DETECTED</p>
+        <p class="death-reason" id="death-reason">COLLISION</p>
         <div class="final-scores">
           <div class="final-score-row">
-            <span class="label">FINAL SCORE</span>
+            <span class="label">SCORE</span>
             <span class="value" id="final-score">00000</span>
           </div>
           <div class="final-score-row">
-            <span class="label">HIGH SCORE</span>
+            <span class="label">BEST</span>
             <span class="value" id="final-highscore">00000</span>
             <span class="new-record hidden" id="new-record">NEW!</span>
           </div>
         </div>
-        <p class="overlay-text">PRESS R TO RESTART</p>
-        <button class="start-btn" id="restart-btn">RESTART</button>
+        <button class="start-btn" id="restart-btn">AGAIN</button>
       </div>
     </div>
   </div>
 
   <script src="assets/sprites/sprites.js"></script>
-  <script src="assets/ui/ui-elements.js"></script>
   <script src="assets/audio/audio.js"></script>
   <script src="game.js"></script>
 </body>
