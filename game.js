@@ -82,8 +82,8 @@ let gameStateDisplay, waveDisplay, modeDisplay;
 function init() {
   state.reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-  // Detect mobile
-  isMobile = window.matchMedia('(max-width: 600px), (hover: none) and (pointer: coarse)').matches;
+  // Detect mobile (match CSS breakpoint)
+  isMobile = window.matchMedia('(max-width: 768px)').matches;
 
   canvas = document.getElementById('game-canvas');
   ctx = canvas.getContext('2d');

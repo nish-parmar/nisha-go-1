@@ -38,7 +38,7 @@ body {
   display: none;
 }
 
-@media (max-width: 600px), (hover: none) and (pointer: coarse) {
+@media (max-width: 768px) {
   .desktop-only {
     display: none !important;
   }
@@ -371,7 +371,7 @@ body {
 }
 
 /* ===== MOBILE STYLES ===== */
-@media (max-width: 600px), (hover: none) and (pointer: coarse) {
+@media (max-width: 768px) {
   #game-container {
     padding: 0;
     gap: 0;
