@@ -30,12 +30,8 @@ body {
 }
 
 /* ===== RESPONSIVE VISIBILITY ===== */
-.desktop-only {
-  display: flex;
-}
-
 .mobile-only {
-  display: none;
+  display: none !important;
 }
 
 @media (max-width: 768px) {
@@ -54,9 +50,9 @@ body {
   height: 100vh;
   display: flex;
   flex-direction: column;
-  padding: 8px;
-  gap: 8px;
-  max-width: 900px;
+  padding: 16px;
+  gap: 12px;
+  max-width: 1200px;
   margin: 0 auto;
   position: relative;
 }
@@ -104,7 +100,8 @@ body {
 .main-area {
   flex: 1;
   display: flex;
-  gap: 8px;
+  flex-direction: row;
+  gap: 12px;
   min-height: 0;
 }
 
@@ -154,10 +151,11 @@ body {
 
 /* ===== RIGHT PANEL ===== */
 .right-panel {
-  width: 130px;
+  width: 160px;
+  flex-shrink: 0;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 12px;
 }
 
 .status-content {
