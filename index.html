@@ -10,13 +10,87 @@
 </head>
 <body>
   <div id="game-container">
-    <!-- GAME CANVAS -->
-    <div class="canvas-wrapper">
-      <canvas id="game-canvas"></canvas>
-    </div>
+    <!-- TOP BAR (Desktop only) -->
+    <header class="top-bar desktop-only">
+      <div class="bar-segment">
+        <span class="label">SESSION</span>
+        <span class="value" id="session-id">0xN1SHA</span>
+      </div>
+      <div class="bar-segment">
+        <span class="label">MODE</span>
+        <span class="value" id="mode-display">STANDBY</span>
+      </div>
+      <div class="bar-segment flex-end">
+        <span class="label">BUILD</span>
+        <span class="value">v1.0</span>
+      </div>
+    </header>
+
+    <!-- MAIN AREA -->
+    <main class="main-area">
+      <!-- CENTER: GAME CANVAS -->
+      <section class="center-panel">
+        <div class="panel-box game-panel desktop-only">
+          <div class="panel-header">PLAY AREA</div>
+          <div class="canvas-wrapper">
+            <canvas id="game-canvas"></canvas>
+          </div>
+        </div>
+        <!-- Mobile canvas (no panel box) -->
+        <div class="canvas-wrapper mobile-only">
+          <canvas id="game-canvas-mobile" style="display:none;"></canvas>
+        </div>
+      </section>
+
+      <!-- RIGHT PANELS (Desktop only) -->
+      <aside class="right-panel desktop-only">
+        <div class="panel-box">
+          <div class="panel-header">STATUS</div>
+          <div class="status-content">
+            <div class="status-row">
+              <span class="label">STATE</span>
+              <span class="value" id="game-state">IDLE</span>
+            </div>
+            <div class="status-row">
+              <span class="label">WAVE</span>
+              <span class="value" id="wave-display">01</span>
+            </div>
+          </div>
+        </div>
+        <div class="panel-box">
+          <div class="panel-header">MOMENTUM</div>
+          <div class="momentum-content">
+            <div class="momentum-bar">
+              <div class="momentum-fill" id="momentum-fill"></div>
+            </div>
+            <div class="momentum-value" id="momentum-value">100%</div>
+          </div>
+        </div>
+        <div class="panel-box">
+          <div class="panel-header">SCORE</div>
+          <div class="score-content">
+            <div class="score-value" id="score-display">00000</div>
+          </div>
+        </div>
+        <div class="panel-box">
+          <div class="panel-header">HIGH SCORE</div>
+          <div class="score-content">
+            <div class="score-value" id="highscore-display">00000</div>
+          </div>
+        </div>
+      </aside>
+    </main>
+
+    <!-- BOTTOM BAR (Desktop only) -->
+    <footer class="bottom-bar desktop-only">
+      <div class="bar-segment">
+        <span class="label">CONTROLS</span>
+        <span class="value">← → MOVE | ESC PAUSE | R RESTART</span>
+      </div>
+    </footer>
 
     <!-- MOBILE CONTROLS -->
-    <div class="mobile-controls" id="mobile-controls">
+    <div class="mobile-controls mobile-only" id="mobile-controls">
       <button class="mobile-btn" id="btn-left" aria-label="Move left">◀</button>
       <button class="mobile-btn" id="btn-right" aria-label="Move right">▶</button>
     </div>
@@ -26,20 +100,6 @@
       <div class="overlay-box">
         <h1 class="game-title">NISHA GO!</h1>
         <p class="subtitle">DODGE CHAOS. COLLECT TRAINERS. KEEP MOMENTUM.</p>
-        <div class="controls-list">
-          <div class="control-item">
-            <span class="key">← / →</span>
-            <span class="desc">MOVE</span>
-          </div>
-          <div class="control-item">
-            <span class="key">ESC</span>
-            <span class="desc">PAUSE</span>
-          </div>
-          <div class="control-item mobile-hint">
-            <span class="key">SWIPE</span>
-            <span class="desc">OR TAP ◀ ▶</span>
-          </div>
-        </div>
         <button class="start-btn" id="start-btn" autofocus>START</button>
       </div>
     </div>

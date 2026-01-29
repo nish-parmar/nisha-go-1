@@ -72,10 +72,18 @@ const state = {
 let canvas, ctx;
 let startScreen, pauseScreen, gameoverScreen;
 let finalScore, finalHighscore, deathReasonDisplay;
+let isMobile = false;
+
+// Desktop HUD elements
+let scoreDisplay, highscoreDisplay, momentumFill, momentumValue;
+let gameStateDisplay, waveDisplay, modeDisplay;
 
 // ===== INIT =====
 function init() {
   state.reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  // Detect mobile
+  isMobile = window.matchMedia('(max-width: 600px), (hover: none) and (pointer: coarse)').matches;
 
   canvas = document.getElementById('game-canvas');
   ctx = canvas.getContext('2d');
@@ -87,10 +95,22 @@ function init() {
   finalHighscore = document.getElementById('final-highscore');
   deathReasonDisplay = document.getElementById('death-reason');
 
+  // Desktop HUD elements
+  scoreDisplay = document.getElementById('score-display');
+  highscoreDisplay = document.getElementById('highscore-display');
+  momentumFill = document.getElementById('momentum-fill');
+  momentumValue = document.getElementById('momentum-value');
+  gameStateDisplay = document.getElementById('game-state');
+  waveDisplay = document.getElementById('wave-display');
+  modeDisplay = document.getElementById('mode-display');
+
   setupCanvas();
   loadHighScore();
   setupInput();
   setupButtons();
+
+  // Initialize desktop HUD with high score
+  updateDesktopHUD();
 
   requestAnimationFrame(gameLoop);
 }
@@ -275,6 +295,8 @@ function startGame() {
   startScreen.classList.add('hidden');
   pauseScreen.classList.add('hidden');
   gameoverScreen.classList.add('hidden');
+
+  updateDesktopHUD();
 }
 
 function togglePause() {
@@ -286,6 +308,7 @@ function togglePause() {
     state.gameState = 'playing';
     pauseScreen.classList.add('hidden');
   }
+  updateDesktopHUD();
 }
 
 function endGame(reason = 'collision') {
@@ -313,6 +336,8 @@ function endGame(reason = 'collision') {
 
   gameoverScreen.classList.remove('hidden');
   document.getElementById('restart-btn').focus();
+
+  updateDesktopHUD();
 }
 
 function restartGame() {
@@ -371,6 +396,9 @@ function update(timestamp, deltaTime) {
   checkCollisions();
   updateParticles();
   updateScorePopups();
+
+  // Update desktop HUD
+  updateDesktopHUD();
 }
 
 // ===== SPAWNING =====
@@ -616,6 +644,9 @@ function drawScorePopups() {
 }
 
 function drawHUD() {
+  // Only draw canvas HUD on mobile (desktop has HTML HUD panels)
+  if (!isMobile) return;
+
   // Score (top right)
   ctx.font = 'bold 12px monospace';
   ctx.textAlign = 'right';
@@ -640,6 +671,39 @@ function drawHUD() {
   ctx.strokeRect(barX, barY, barWidth, barHeight);
 
   ctx.textAlign = 'left';
+}
+
+// ===== DESKTOP HUD =====
+function updateDesktopHUD() {
+  if (isMobile) return;
+
+  if (scoreDisplay) scoreDisplay.textContent = formatScore(state.score);
+  if (highscoreDisplay) highscoreDisplay.textContent = formatScore(state.highScore);
+
+  if (momentumFill) {
+    const percent = (state.momentum / CONFIG.MOMENTUM_MAX) * 100;
+    momentumFill.style.width = percent + '%';
+    momentumFill.style.background = percent < 25 ? COLORS.MOMENTUM_LOW : COLORS.ORANGE;
+  }
+
+  if (momentumValue) {
+    momentumValue.textContent = Math.floor(state.momentum) + '%';
+  }
+
+  if (gameStateDisplay) {
+    const stateText = state.gameState === 'playing' ? 'ACTIVE' :
+                      state.gameState === 'paused' ? 'PAUSED' :
+                      state.gameState === 'gameover' ? 'ENDED' : 'IDLE';
+    gameStateDisplay.textContent = stateText;
+  }
+
+  if (waveDisplay) {
+    waveDisplay.textContent = state.waveNumber.toString().padStart(2, '0');
+  }
+
+  if (modeDisplay) {
+    modeDisplay.textContent = state.gameState === 'playing' ? 'RUNNING' : 'STANDBY';
+  }
 }
 
 // ===== UTILS =====
